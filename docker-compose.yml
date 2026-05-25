@@ -1,0 +1,44 @@
+version: '3.8'
+
+services:
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    ports:
+      - '5000:5000'
+    environment:
+      - NODE_ENV=production
+      - GROQ_API_KEY=${GROQ_API_KEY}
+      - BACKEND_PORT=5000
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - frontend-builder
+
+  frontend-builder:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: builder
+    volumes:
+      - frontend-dist:/app/dist
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
+    ports:
+      - '3000:80'
+    depends_on:
+      - backend
+    environment:
+      - REACT_APP_API_URL=http://localhost:5000
+
+volumes:
+  frontend-dist:
+
+networks:
+  default:
+    name: dockerforge-network
