@@ -23,9 +23,20 @@ router.post('/generate', async (req, res) => {
       return res.status(400).json({ error: 'repoUrl is required' });
     }
 
-    // Validate URL format
-    if (!repoUrl.includes('github.com')) {
-      return res.status(400).json({ error: 'Must be a valid GitHub repository URL' });
+    // Validate GitHub URL format
+    const urlPattern = /^https:\/\/github\.com\/[\w\-]+\/[\w\-\.]+\/?$/i;
+    if (!urlPattern.test(repoUrl)) {
+      const parts = repoUrl.split('/').filter(p => p && p !== 'github.com' && !p.includes('https:'));
+      
+      if (parts.length === 1) {
+        return res.status(400).json({ 
+          error: `Invalid GitHub URL - missing repository name. Use format: https://github.com/${parts[0]}/repository-name` 
+        });
+      } else {
+        return res.status(400).json({ 
+          error: 'Invalid GitHub URL format. Expected: https://github.com/username/repository' 
+        });
+      }
     }
 
     const jobId = createJob(repoUrl);

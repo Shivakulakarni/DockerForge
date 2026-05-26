@@ -93,9 +93,11 @@ export async function orchestrateDockerGeneration(jobId, maxRetries = 3) {
         addLog(job, `✗ Build failed on attempt ${attempt}`);
 
         if (buildError.error) {
-          lastError = buildError.error.errorMessage || JSON.stringify(buildError.error);
-          addLog(job, `Error Code: ${buildError.error.errorCode || 'UNKNOWN'}`);
-          addLog(job, `Error: ${lastError}`);
+          const errorCode = buildError.error.errorCode || 'UNKNOWN';
+          const errorMsg = buildError.error.errorMessage || JSON.stringify(buildError.error);
+          
+          addLog(job, `Error Code: ${errorCode}`);
+          addLog(job, `Error: ${errorMsg}`);
 
           if (buildError.error.suggestions && buildError.error.suggestions.length > 0) {
             addLog(job, `Suggestions to fix:`);
@@ -103,6 +105,16 @@ export async function orchestrateDockerGeneration(jobId, maxRetries = 3) {
               addLog(job, `  ${idx + 1}. ${suggestion}`);
             });
           }
+
+          // Build rich error context for LLM retry
+          lastError = `Build Error (Code: ${errorCode}):
+${errorMsg}
+
+Build output excerpt:
+${buildError.logs ? buildError.logs.split('\n').slice(-10).join('\n') : 'No log output'}
+
+Suggestions to fix:
+${buildError.error.suggestions ? buildError.error.suggestions.map((s, i) => `${i + 1}. ${s}`).join('\n') : 'Try using a valid base image and ensuring all dependencies are installed'}`;
         }
 
         job.attempts.push({

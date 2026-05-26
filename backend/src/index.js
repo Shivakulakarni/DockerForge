@@ -5,9 +5,19 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import routes from './api/routes.js';
 
-dotenv.config();
-
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
+
+// Load .env from backend directory
+dotenv.config({ path: path.join(__dirname, '../.env') });
+
+// Verify API keys are loaded
+if (!process.env.GROQ_API_KEY) {
+  console.warn('⚠️  WARNING: GROQ_API_KEY not found in .env file');
+}
+if (!process.env.GEMINI_API_KEY) {
+  console.warn('⚠️  WARNING: GEMINI_API_KEY not found in .env file');
+}
+
 const app = express();
 
 // Middleware

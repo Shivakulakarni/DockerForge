@@ -103,12 +103,15 @@ export default function App() {
             <input
               id="repo-url"
               type="text"
-              placeholder="e.g., https://github.com/expressjs/express"
+              placeholder="e.g., https://github.com/username/repository"
               value={repoUrl}
               onChange={(e) => setRepoUrl(e.target.value)}
               disabled={loading}
               required
             />
+            <small style={{color: '#666', marginTop: '5px', display: 'block'}}>
+              Must include both username and repository name (e.g., https://github.com/expressjs/express)
+            </small>
           </div>
           <button type="submit" disabled={loading || !repoUrl.trim()}>
             {loading ? 'Generating...' : 'Generate Dockerfile'}

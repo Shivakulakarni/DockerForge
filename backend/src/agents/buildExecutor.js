@@ -11,70 +11,86 @@ const docker = new Docker();
 function parseDockerError(errorLog) {
   const lines = errorLog.split('\n');
   const error = {
-    raw: errorLog,
+    raw: errorLog.slice(0, 1000), // Keep first 1000 chars for context
     errorCode: null,
     errorMessage: null,
     suggestions: [],
+    context: [],
   };
 
-  // Extract error code and message
+  // Extract error code and message - look for actual error lines
   let errorFound = false;
-  for (const line of lines) {
-    if (line.includes('ERROR') || line.includes('Error') || line.includes('failed')) {
+  let contextLines = [];
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i];
+    
+    // Collect context around errors
+    if (line.includes('ERROR') || line.includes('Error') || line.includes('error') || line.includes('FAILED')) {
       if (!errorFound) {
-        error.errorMessage = line.trim().substring(0, 150);
+        error.errorMessage = line.trim().substring(0, 200);
         errorFound = true;
+        // Add surrounding lines for context
+        contextLines = lines.slice(Math.max(0, i - 2), Math.min(lines.length, i + 3));
       }
     }
     
     // Manifest/Image not found
-    if (line.includes('manifest not found') || line.includes('image not found') || line.includes('pull access denied')) {
+    if (line.includes('manifest not found') || line.includes('image not found') || line.includes('pull access denied') || line.includes('no such file or directory') && line.includes('FROM')) {
       error.errorCode = 'MANIFEST_NOT_FOUND';
       error.suggestions = [
-        'Verify base image exists (e.g., node:18-alpine, python:3.11-slim, golang:1.21-alpine)',
-        'Check spelling and tag of base image',
-        'Ensure image is publicly available or credentials are set'
+        'Verify base image name and tag exist (check docker hub)',
+        'Try: node:18-alpine, python:3.11-slim, golang:1.21-alpine, or alpine:latest',
+        'If using private image, ensure registry credentials are available'
       ];
     }
     
-    // Command not found
-    if (line.includes('command not found') || line.includes('not found in') || line.includes('sh:') && line.includes('not found')) {
+    // Command not found (RUN layer)
+    if ((line.includes('command not found') || line.includes('not found in')) && !error.errorCode) {
       error.errorCode = 'COMMAND_NOT_FOUND';
       error.suggestions = [
-        'Try adding package installation before using the command',
-        'Example: RUN apt-get update && apt-get install -y <package>',
-        'Verify command is available in the base image'
+        'Install required packages before using commands',
+        'Try: RUN apt-get update && apt-get install -y <package>',
+        'Ensure the command is available in the base image OS'
       ];
     }
     
-    // File/Path not found
-    if (line.includes('COPY failed') || line.includes('ADD failed') || line.includes('no such file or directory')) {
+    // File/Path not found (COPY/ADD)
+    if ((line.includes('COPY failed') || line.includes('ADD failed') || line.includes('no such file or directory') || line.includes('denied')) && !error.errorCode) {
       error.errorCode = 'PATH_NOT_FOUND';
       error.suggestions = [
-        'Check COPY/ADD source paths exist in the repository',
-        'Use relative paths from repository root',
-        'Example: COPY package.json . or COPY src/ /app/src/'
+        'Check COPY/ADD source paths - they must exist in the repository root',
+        'Use relative paths from repository root: COPY package.json . or COPY src/ /app/src/',
+        'Verify file names and paths are correct (case-sensitive on Linux)'
       ];
     }
     
     // Permission denied
-    if (line.includes('permission denied')) {
+    if (line.includes('permission denied') && !error.errorCode) {
       error.errorCode = 'PERMISSION_DENIED';
       error.suggestions = [
-        'Try adding RUN chmod +x to make scripts executable',
-        'Verify USER context (run as root if needed for installation)',
-        'Check file ownership in COPY commands'
+        'Add executable permission: RUN chmod +x script.sh',
+        'Ensure RUN commands have proper permissions',
+        'Try running as root or appropriate user'
       ];
     }
   }
 
-  // If no error found, extract the most relevant error line
+  error.context = contextLines.slice(0, 5);
+
+  // If no specific error found, extract most relevant line
   if (!error.errorMessage) {
-    const relevantLines = lines.filter(l => l.includes('error') || l.includes('Error') || l.includes('ERROR') || l.includes('failed'));
+    const relevantLines = lines.filter(l => 
+      l.toLowerCase().includes('error') || 
+      l.toLowerCase().includes('failed') || 
+      l.toLowerCase().includes('denied')
+    );
     if (relevantLines.length > 0) {
-      error.errorMessage = relevantLines[0].trim().substring(0, 150);
+      error.errorMessage = relevantLines[0].trim().substring(0, 200);
     } else {
-      error.errorMessage = lines.filter(l => l.trim().length > 0).pop() || 'Unknown build error';
+      // Last non-empty line
+      const lastLine = lines.filter(l => l.trim().length > 0).pop();
+      error.errorMessage = lastLine ? lastLine.trim().substring(0, 200) : 'Unknown build error';
     }
   }
 
