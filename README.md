@@ -1,8 +1,13 @@
-# DockerForge - AI-Powered Dockerfile Generator
+# 🐳 DockerForge - AI-Powered Dockerfile Generator
 
-An intelligent, self-correcting system that analyzes GitHub repositories and automatically generates production-ready Dockerfiles with built-in error recovery.
+[![GitHub License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![GitHub Stars](https://img.shields.io/github/stars/Shivakulakarni/DockerForge?style=social)](https://github.com/Shivakulakarni/DockerForge)
+[![Status](https://img.shields.io/badge/Status-Production%20Ready-brightgreen)]()
 
-**🚀 Status**: ✅ **Production Ready** | **Last Updated**: May 26, 2026
+> **Intelligent, self-correcting system** that analyzes GitHub repositories and automatically generates production-ready Dockerfiles with built-in error recovery and retry logic.
+
+**📍 Live Demo**: Coming to Vercel soon!  
+**📚 Full Docs**: [SETUP.md](SETUP.md) | [IMPLEMENTATION.md](IMPLEMENTATION.md) | [QUICK_START.md](QUICK_START.md)
 
 ---
 
@@ -365,6 +370,8 @@ MIT
 ---
 
 **Built with** ❤️ **using** Node.js, React, Groq API, Docker SDK
-#   D o c k e r F o r g e  
- #   D o c k e r F o r g e  
+#   D o c k e r F o r g e 
+ 
+ #   D o c k e r F o r g e 
+ 
  
