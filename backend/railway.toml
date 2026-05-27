@@ -1,0 +1,14 @@
+# Railway Deployment Configuration
+# See https://docs.railway.app/ for more information
+
+[build]
+builder = "dockerfile"
+dockerfilePath = "Dockerfile"
+
+[deploy]
+startCommand = "node src/index.js"
+restartPolicyMaxRetries = 5
+
+[env]
+NODE_ENV = "production"
+BACKEND_PORT = "5000"
