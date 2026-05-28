@@ -20,8 +20,17 @@ if (!process.env.GEMINI_API_KEY) {
 
 const app = express();
 
+const corsOptions = {
+  origin: process.env.CORS_ORIGIN
+    ? process.env.CORS_ORIGIN.split(',')
+    : true, // Allow all origins when no env var is set (dev mode)
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'Bypass-Tunnel-Reminder', 'ngrok-skip-browser-warning', 'serveo-skip-browser-warning'],
+  credentials: true,
+};
+
 // Middleware
-app.use(cors());
+app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.static(path.join(__dirname, '../../frontend/dist')));
 
@@ -43,7 +52,13 @@ app.get('*', (req, res) => {
   });
 });
 
-const PORT = process.env.BACKEND_PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`✓ Backend listening on http://localhost:${PORT}`);
-});
+// Start server only in non-serverless environments
+if (!process.env.VERCEL) {
+  const PORT = process.env.BACKEND_PORT || 5000;
+  app.listen(PORT, () => {
+    console.log(`✓ Backend listening on http://localhost:${PORT}`);
+  });
+}
+
+// Export for Vercel serverless
+export default app;

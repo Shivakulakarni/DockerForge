@@ -24,9 +24,10 @@ const API_BASE = getAPIBase();
 console.log('API Base URL:', API_BASE);
 console.log('Environment:', process.env.NODE_ENV);
 
-// Bypass localtunnel/ngrok browser warning screens for API calls
+// Bypass localtunnel/ngrok/serveo browser warning screens for API calls
 axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
 axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
+axios.defaults.headers.common['serveo-skip-browser-warning'] = 'true';
 
 
 export default function App() {
