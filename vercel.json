@@ -10,7 +10,7 @@
   "rewrites": [
     {
       "source": "/api/(.*)",
-      "destination": "https://dockerforge-backend.vercel.app/api/$1"
+      "destination": "http://localhost:5000/api/$1"
     }
   ],
   "redirects": [
@@ -19,11 +19,5 @@
       "destination": "/",
       "permanent": false
     }
-  ],
-  "functions": {
-    "api/[...].js": {
-      "runtime": "nodejs18.x",
-      "memory": 1024
-    }
-  }
+  ]
 }

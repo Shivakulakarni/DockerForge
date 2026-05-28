@@ -2,6 +2,33 @@ import React, { useState, useRef, useEffect } from 'react';
 import axios from 'axios';
 import './App.css';
 
+// Get API base URL from environment or default to current domain + :5000
+const getAPIBase = () => {
+  // If environment variable is set, use it
+  if (typeof import.meta !== 'undefined' && import.meta.env && import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  
+  // Development: use localhost:5000
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:5000';
+  }
+  
+  // Production: try to use same domain with /api proxy
+  return '/api';
+};
+
+const API_BASE = getAPIBase();
+
+// Debug log for troubleshooting
+console.log('API Base URL:', API_BASE);
+console.log('Environment:', process.env.NODE_ENV);
+
+// Bypass localtunnel/ngrok browser warning screens for API calls
+axios.defaults.headers.common['Bypass-Tunnel-Reminder'] = 'true';
+axios.defaults.headers.common['ngrok-skip-browser-warning'] = 'true';
+
+
 export default function App() {
   const [repoUrl, setRepoUrl] = useState('');
   const [jobId, setJobId] = useState(null);
@@ -23,7 +50,7 @@ export default function App() {
 
     const interval = setInterval(async () => {
       try {
-        const res = await axios.get(`/api/status/${jobId}`);
+        const res = await axios.get(`${API_BASE}/api/status/${jobId}`);
         setStatus(res.data.status);
         setLogs(res.data.logs);
 
@@ -31,7 +58,7 @@ export default function App() {
           clearInterval(interval);
           // Fetch final result (works for both success and failure)
           try {
-            const resultRes = await axios.get(`/api/result/${jobId}`);
+            const resultRes = await axios.get(`${API_BASE}/api/result/${jobId}`);
             setDockerfile(resultRes.data.dockerfile);
             if (resultRes.data.error) {
               setError(resultRes.data.error);
@@ -59,7 +86,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const res = await axios.post('/api/generate', {
+      const res = await axios.post(`${API_BASE}/api/generate`, {
         repoUrl: repoUrl.trim(),
         maxRetries: 3,
       });
